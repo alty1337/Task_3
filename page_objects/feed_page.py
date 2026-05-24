@@ -17,6 +17,11 @@ class FeedPage(BasePage):
         self.wait_for_visibility(FeedPageLocators.TOTAL_COUNTER)
         self.wait_for_visibility(FeedPageLocators.ORDER_CARD)
 
+    @allure.step("РћР±РЅРѕРІР»СЏРµРј Р»РµРЅС‚Сѓ Р·Р°РєР°Р·РѕРІ")
+    def refresh_feed(self):
+        self.refresh_page()
+        self.wait_for_feed_loaded()
+
     @allure.step("Открываем первый заказ в ленте")
     def open_first_order(self):
         self.wait_for_feed_loaded()
@@ -29,10 +34,7 @@ class FeedPage(BasePage):
 
     @allure.step("Проверяем, что открыты детали заказа")
     def order_details_modal_is_visible(self):
-        self.wait.until(
-            lambda driver: "/feed/" in driver.current_url
-            and len(driver.current_url.split("/feed/")[-1]) > 20
-        )
+        self.wait_for_url_path_suffix_longer_than("/feed/", 20)
         return "/feed/" in self.get_current_url()
 
     @allure.step("Получаем счетчик Выполнено за все время")
@@ -50,11 +52,11 @@ class FeedPage(BasePage):
 
     @allure.step("Ждем увеличения счетчика Выполнено за все время")
     def wait_for_total_counter_greater_than(self, value):
-        self.wait.until(lambda driver: self.get_total_counter() > value)
+        self.wait_for_element_text_number_greater_than(FeedPageLocators.TOTAL_COUNTER, value)
 
     @allure.step("Ждем увеличения счетчика Выполнено за сегодня")
     def wait_for_today_counter_greater_than(self, value):
-        self.wait.until(lambda driver: self.get_today_counter() > value)
+        self.wait_for_element_text_number_greater_than(FeedPageLocators.TODAY_COUNTER, value)
 
     @allure.step("Ждем появления заказа в ленте")
     def wait_for_order_number_in_feed(self, order_number):
@@ -67,8 +69,8 @@ class FeedPage(BasePage):
     @allure.step("Ждем появления заказа в блоке В работе")
     def wait_for_order_number_in_progress(self, order_number):
         self.wait_for_visibility(FeedPageLocators.IN_PROGRESS_LIST)
-        self.wait.until(
-            lambda driver: self._is_order_number_in_progress(order_number),
+        self.wait_for_element_exists(
+            FeedPageLocators.order_number_in_progress(order_number),
             message=f"Заказ {order_number} не появился в разделе В работе",
         )
 
@@ -77,4 +79,4 @@ class FeedPage(BasePage):
         return self._is_order_number_in_progress(order_number)
 
     def _is_order_number_in_progress(self, order_number):
-        return bool(self.driver.find_elements(*FeedPageLocators.order_number_in_progress(order_number)))
+        return self.element_exists(FeedPageLocators.order_number_in_progress(order_number))

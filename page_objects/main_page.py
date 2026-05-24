@@ -19,14 +19,14 @@ class MainPage(BasePage):
 
     @allure.step("Получаем значение каунтера ингредиента")
     def get_ingredient_counter(self):
-        counters = self.driver.find_elements(*MainPageLocators.INGREDIENT_COUNTER)
+        counters = self.find_elements(MainPageLocators.INGREDIENT_COUNTER)
         return int(counters[0].text) if counters else 0
 
     @allure.step("Добавляем ингредиент в конструктор")
     def add_ingredient_to_constructor(self):
         counter_before = self.get_ingredient_counter()
         self.drag_and_drop(MainPageLocators.INGREDIENT_CARD, MainPageLocators.CONSTRUCTOR_DROP_AREA)
-        self.wait.until(lambda driver: self.get_ingredient_counter() > counter_before)
+        self.wait_for_element_text_number_greater_than(MainPageLocators.INGREDIENT_COUNTER, counter_before)
 
     @allure.step("Оформляем заказ")
     def click_order_button(self):
@@ -35,7 +35,7 @@ class MainPage(BasePage):
     @allure.step("Закрываем модальное окно")
     def close_modal(self):
         self.close_modal_if_present()
-        for button in self.driver.find_elements(*MainPageLocators.MODAL_CLOSE_BUTTON):
+        for button in self.find_elements(MainPageLocators.MODAL_CLOSE_BUTTON):
             if button.is_displayed():
                 button.click()
                 break
@@ -56,7 +56,7 @@ class MainPage(BasePage):
     @allure.step("Получаем номер созданного заказа")
     def get_order_number(self):
         self.wait_for_order_success()
-        self.driver.get(FEED_URL)
+        self.go_to_url(FEED_URL)
         self.wait_for_visibility(FeedPageLocators.TOTAL_COUNTER)
         self.wait_for_visibility(FeedPageLocators.ORDER_CARD)
         order_text = self.get_text(FeedPageLocators.FIRST_ORDER_NUMBER)
@@ -64,7 +64,7 @@ class MainPage(BasePage):
 
     @allure.step("Ждем открытия главной страницы")
     def wait_for_open_main_page(self):
-        self.wait_for_url_to_be(MAIN_PAGE_URL)
+        self.wait_for_url_contains(MAIN_PAGE_URL)
 
     @allure.step("Ждем открытия деталей ингредиента")
     def wait_for_ingredient_details(self):

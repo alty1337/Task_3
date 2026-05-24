@@ -10,6 +10,28 @@ from locators.common_locators import CommonLocators
 from locators.header_locators import HeaderLocators
 
 
+class UrlPathSuffixLongerThan:
+    def __init__(self, path, min_length):
+        self.path = path
+        self.min_length = min_length
+
+    def __call__(self, driver):
+        return self.path in driver.current_url and len(driver.current_url.split(self.path)[-1]) > self.min_length
+
+
+class ElementTextNumberGreaterThan:
+    def __init__(self, page, locator, value):
+        self.page = page
+        self.locator = locator
+        self.value = value
+
+    def __call__(self, driver):
+        elements = self.page.find_elements(self.locator)
+        if not elements or not elements[0].text:
+            return False
+        return int(elements[0].text) > self.value
+
+
 class BasePage:
     def __init__(self, driver):
         self.driver = driver
@@ -18,6 +40,12 @@ class BasePage:
     def open_page(self, url):
         self.driver.get(url)
         self.close_modal_if_present()
+
+    def go_to_url(self, url):
+        self.driver.get(url)
+
+    def refresh_page(self):
+        self.driver.refresh()
 
     def close_modal_if_present(self):
         short_wait = WebDriverWait(self.driver, 3)
@@ -46,6 +74,29 @@ class BasePage:
 
     def wait_for_url_to_be(self, url):
         self.wait.until(expected_conditions.url_to_be(url))
+
+    def wait_for_url_path_suffix_longer_than(self, path, min_length):
+        self.wait.until(UrlPathSuffixLongerThan(path, min_length))
+
+    def wait_for_element_text_number_greater_than(self, locator, value):
+        for _ in range(2):
+            try:
+                return self.wait.until(ElementTextNumberGreaterThan(self, locator, value))
+            except TimeoutException:
+                self.refresh_page()
+        return self.wait.until(ElementTextNumberGreaterThan(self, locator, value))
+
+    def wait_until(self, condition, message=None):
+        return self.wait.until(condition, message=message)
+
+    def find_elements(self, locator):
+        return self.driver.find_elements(*locator)
+
+    def element_exists(self, locator):
+        return bool(self.find_elements(locator))
+
+    def wait_for_element_exists(self, locator, message=None):
+        return self.wait.until(expected_conditions.presence_of_element_located(locator), message=message)
 
     def click(self, locator):
         self.close_modal_if_present()
